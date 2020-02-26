@@ -14,7 +14,7 @@ export default class App extends Component {
    state = {
       player : false,
       gameStatus: [],
-      selectedInput: "o",
+      selectedInput: "x",
       cross: require('../assets/cross.png'),
       circle: require('../assets/circle.png'),
       backGroundCounter: 1,
@@ -28,7 +28,8 @@ export default class App extends Component {
       backGround:  require('../assets/fondoPlanetas.jpg'),
       transparent: require('../assets/transparent.png'),
       isModalVisible: false,
-      modalText: "The winner is no one."
+      modalText: "The winner is no one.",
+      iaStatus: false,
 
    }
   bannerError() {
@@ -41,37 +42,112 @@ export default class App extends Component {
        if(this.state.gameStatus[pos] !== undefined ){
           console.log('Casilla ocupada', this.state.gameStatus[pos] );
         }else{
-          let newGameStatus = this.state.gameStatus;
-          let input = this.state.selectedInput === "x" ? "o" : "x"
-          newGameStatus[pos] = this.state.selectedInput;
-          let columnas
-          let filas
-          for(let i = 0; i<3; i++){
-            if(!filas && !columnas){
-               columnas = (newGameStatus[i] === newGameStatus[i +3] && newGameStatus[i +3] === newGameStatus[i+6]) &&  (newGameStatus[i] !==undefined && newGameStatus[i +3] !== undefined && newGameStatus[i+6] !== undefined)
-               filas = (newGameStatus[i *3] === newGameStatus[i*3 +1] && newGameStatus[i*3 +1] === newGameStatus[i*3+2]) && ((newGameStatus[i *3] !== undefined && newGameStatus[i*3 +1] !==undefined && newGameStatus[i*3+2] !== undefined))                           
-            }            
-          }
-          let diagonal = ((newGameStatus[0] ===  newGameStatus[4] &&  newGameStatus[4] === newGameStatus[8]) && (newGameStatus[0]  !== undefined && newGameStatus[4] !==undefined &&  newGameStatus[8] !==undefined)) || ((newGameStatus[2] === newGameStatus[4] && newGameStatus[4] === newGameStatus[6]) && (newGameStatus[2] !==undefined && newGameStatus[4] !==undefined && newGameStatus[6] !==undefined ))
-          if(diagonal || columnas || filas){
-            this.toggleModal()
-            this.setState({modalText: "The winner is " + (this.state.player ?  "P2" : "P1")})
-          }
-          else{
-            let end = true
-            for(let i = 0; i < 9; i++){
-               if(newGameStatus[i] === undefined){
-                  end = false
-               }
-            }         
-            if(end){
-               this.setState({modalText: "The winner is no one."})
-               this.toggleModal()
+         
+            let newGameStatus = this.state.gameStatus;
+            let input = this.state.selectedInput === "x" ? "o" : "x"
+            newGameStatus[pos] = this.state.selectedInput;
+            let columnas
+            let filas
+            for(let i = 0; i<3; i++){
+               if(!filas && !columnas){
+                  columnas = (newGameStatus[i] === newGameStatus[i +3] && newGameStatus[i +3] === newGameStatus[i+6]) &&  (newGameStatus[i] !==undefined && newGameStatus[i +3] !== undefined && newGameStatus[i+6] !== undefined)
+                  filas = (newGameStatus[i *3] === newGameStatus[i*3 +1] && newGameStatus[i*3 +1] === newGameStatus[i*3+2]) && ((newGameStatus[i *3] !== undefined && newGameStatus[i*3 +1] !==undefined && newGameStatus[i*3+2] !== undefined))                           
+               }            
             }
-            this.setState({gameStatus: newGameStatus, player: !this.state.player, selectedInput: input})
-          }
+            let diagonal = ((newGameStatus[0] ===  newGameStatus[4] &&  newGameStatus[4] === newGameStatus[8]) && (newGameStatus[0]  !== undefined && newGameStatus[4] !==undefined &&  newGameStatus[8] !==undefined)) || ((newGameStatus[2] === newGameStatus[4] && newGameStatus[4] === newGameStatus[6]) && (newGameStatus[2] !==undefined && newGameStatus[4] !==undefined && newGameStatus[6] !==undefined ))
+            if(diagonal || columnas || filas){
+               this.toggleModal()
+               this.setState({modalText: "The winner is " + (this.state.player ?  "P2" : "P1"), iaStatus: false})
+            }
+            else{
+               let end = true
+               for(let i = 0; i < 9; i++){
+                  if(newGameStatus[i] === undefined){
+                     end = false
+                  }
+               }         
+               if(end){
+                  this.setState({modalText: "The winner is no one.", iaStatus: false})
+                  this.toggleModal()
+               }
+               this.setState({gameStatus: newGameStatus, player: !this.state.player, selectedInput: input})
+               if(this.state.iaStatus){
+                  newGameStatus = this.calculateIaMovement(newGameStatus)
+                  for(let i = 0; i<3; i++){
+                     if(!filas && !columnas){
+                        columnas = (newGameStatus[i] === newGameStatus[i +3] && newGameStatus[i +3] === newGameStatus[i+6]) &&  (newGameStatus[i] !==undefined && newGameStatus[i +3] !== undefined && newGameStatus[i+6] !== undefined)
+                        filas = (newGameStatus[i *3] === newGameStatus[i*3 +1] && newGameStatus[i*3 +1] === newGameStatus[i*3+2]) && ((newGameStatus[i *3] !== undefined && newGameStatus[i*3 +1] !==undefined && newGameStatus[i*3+2] !== undefined))                           
+                     }            
+                  }
+                  let diagonal = ((newGameStatus[0] ===  newGameStatus[4] &&  newGameStatus[4] === newGameStatus[8]) && (newGameStatus[0]  !== undefined && newGameStatus[4] !==undefined &&  newGameStatus[8] !==undefined)) || ((newGameStatus[2] === newGameStatus[4] && newGameStatus[4] === newGameStatus[6]) && (newGameStatus[2] !==undefined && newGameStatus[4] !==undefined && newGameStatus[6] !==undefined ))
+                  if(diagonal || columnas || filas){
+                     this.toggleModal()
+                     this.setState({modalText: "The winner is " + (this.state.player ?  "P2" : "P1"), iaStatus: false})
+                  }
+                  end = true
+                  for(let i = 0; i < 9; i++){
+                     if(newGameStatus[i] === undefined){
+                        end = false
+                     }
+                  }         
+                  if(end){
+                     this.setState({modalText: "The winner is no one.", iaStatus: false})
+                     this.toggleModal()
+                  }
+      
+               }
+            }
           
        }
+   }
+   calculateIaMovement = (newGameStatus) => {
+      let index = Math.floor(Math.random() * 7);
+      console.log(index)
+      for(let i = 0; i<9; i++){
+         if(newGameStatus[index] === undefined){
+            newGameStatus[index] = "x";
+            this.setState({gameStatus: newGameStatus, player: true, selectedInput: "o"})
+            i = 10
+         }
+         if(index === 8){
+            index = 0
+         }else{
+            index = index +1
+         }
+      }
+         return newGameStatus
+      
+      // if(size === 2){
+      //    if(newGameStatus[6] === undefined){
+      //       newGameStatus[6] = "x";
+      //       this.setState({gameStatus: newGameStatus, player: true, selectedInput: input})
+      //    }else{
+      //       newGameStatus[3] = this.state.selectedInput;
+      //       this.setState({gameStatus: newGameStatus, player: true, selectedInput: input})
+      //    }
+      // }
+      // if(size === 4){
+      //    if(newGameStatus[6] === undefined){
+      //       if(newGameStatus[1] === undefined ){
+      //          newGameStatus[1] = "x";
+      //          this.setState({gameStatus: newGameStatus, player: true, selectedInput: input})
+      //       }
+      //       else{
+      //          newGameStatus[4] = this.state.selectedInput;
+      //          this.setState({gameStatus: newGameStatus, player: true, selectedInput: input})
+      //       }               
+      //    }else{
+      //       if(newGameStatus[3] === undefined ){
+      //          newGameStatus[3] = this.state.selectedInput;
+      //          this.setState({gameStatus: newGameStatus, player: true, selectedInput: input})
+      //       }
+      //       else{
+      //          newGameStatus[4] = this.state.selectedInput;
+      //          this.setState({gameStatus: newGameStatus, player: true, selectedInput: input})
+      //       }  
+      //    }
+      // }
+      
    }
    
    toggleModal = () => {
@@ -83,6 +159,9 @@ export default class App extends Component {
          counter = 0
       }
       this.setState({ backGround: this.state.backGrounds[counter], backGroundCounter : counter });
+   }
+   enableIa = () => {
+      this.setState({gameStatus: ["x"], player: false, selectedInput: "o", iaStatus: true, player:true}); 
    }
    render(){
       return (
@@ -175,7 +254,12 @@ export default class App extends Component {
                      <Text style={styles.titleText}>{this.state.modalText}</Text>
                   </View>
                </Modal>
-               <Button title="Change background" onPress={() => {this.changeBackground()}} />
+               <View style={styles.iaButton}>
+                  <Button style={styles.iaButton} title="Play with the IA" onPress={() => {this.enableIa()}} />
+               </View>
+               <View style={styles.backGroundButton}>
+                  <Button style={styles.backGroundButton} title="Change background" onPress={() => {this.changeBackground()}} />
+               </View>
                </View>
          </Image>         
       )
@@ -186,7 +270,7 @@ const styles = StyleSheet.create ({
       flexDirection: 'column',
       justifyContent: 'center',      
       alignItems: 'center',
-      marginTop: -400,
+      marginTop: -350,
       flexGrow : 1,
    },
    backGround: {
@@ -233,8 +317,8 @@ const styles = StyleSheet.create ({
       alignItems: 'center',
       justifyContent: 'center',   
       flexDirection: 'column',
-      marginTop: 40,
       width: 50,
+      marginTop: -40,
       backgroundColor: 'blue',
       fontSize: 35,
       fontWeight: 'bold',
@@ -243,7 +327,7 @@ const styles = StyleSheet.create ({
       alignItems: 'center',
       justifyContent: 'center',   
       flexDirection: 'column',
-      marginTop: 40,
+      marginTop: -40,
       width: 50,
       backgroundColor: 'red',
       fontSize: 35,
@@ -254,7 +338,13 @@ const styles = StyleSheet.create ({
       justifyContent: 'center',      
       alignItems: 'center',
       flexGrow : 1,
-    }
+    },
+    iaButton: {
+      marginBottom: 30,
+    },
+    backGroundButton:  {
+      marginBottom: 30,
+    },
 })
 
 
