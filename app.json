@@ -32,7 +32,9 @@
       "versionCode": 1,
       "config": {
       	"googleMobileAdsAppId": "ca-app-pub-9330146669440542~4454250488"
-      }
+      },
+      "permissions": [],
+
     }
   }
 }
