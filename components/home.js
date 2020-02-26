@@ -3,20 +3,32 @@ import { View, StyleSheet, TouchableHighlight, TouchableWithoutFeedback, Button,
 import Modal from "react-native-modal";
 import { Col, Row, Grid } from 'react-native-easy-grid';
 import { Image  } from 'react-native-elements'
+import {
+   AdMobBanner,
+   AdMobInterstitial,
+   PublisherBanner,
+   AdMobRewarded
+ } from 'expo-ads-admob';
 // import cross from '../assets/cross.png';
 // import circle from '../assets/circle.png';
 import { render } from 'react-dom';
 
 export default class App extends Component {
    state = {
-      player : true,
+      player : false,
       gameStatus: [],
       selectedInput: "o",
       cross: require('../assets/cross.png'),
       circle: require('../assets/circle.png'),
       transparent: require('../assets/transparent.png'),
       isModalVisible: false,
+      modalText: "The winner is no one."
+
    }
+  bannerError() {
+      console.log("An error");
+      return;
+    }
 
    onPressButton = (pos) => {
       //console.log('Click');
@@ -37,33 +49,34 @@ export default class App extends Component {
           let diagonal = ((newGameStatus[0] ===  newGameStatus[4] &&  newGameStatus[4] === newGameStatus[8]) && (newGameStatus[0]  !== undefined && newGameStatus[4] !==undefined &&  newGameStatus[8] !==undefined)) || ((newGameStatus[2] === newGameStatus[4] && newGameStatus[4] === newGameStatus[6]) && (newGameStatus[2] !==undefined && newGameStatus[4] !==undefined && newGameStatus[6] !==undefined ))
           if(diagonal || columnas || filas){
             this.toggleModal()
-            console.log("Ha ganado el jugador con " + this.state.selectedInput)
+            this.setState({modalText: "The winner is " + (this.state.player ?  "P2" : "P1")})
           }
-          let end = true
-          for(let i = 0; i < 9; i++){
-            if(newGameStatus[i] === undefined){
-               end = false
+          else{
+            let end = true
+            for(let i = 0; i < 9; i++){
+               if(newGameStatus[i] === undefined){
+                  end = false
+               }
+            }         
+            if(end){
+               this.setState({modalText: "The winner is no one."})
+               this.toggleModal()
             }
+            this.setState({gameStatus: newGameStatus, player: !this.state.player, selectedInput: input})
           }
-         //    if(item === undefined){
-         //       end = false
-         //    }
-         //  })
-          if(end){
-             console.log('toggle')
-             this.toggleModal()
-          }
-          this.setState({gameStatus: newGameStatus, player: false, selectedInput: input})
+          
        }
    }
    
    toggleModal = () => {
-      console.log('modaaaal')
       this.setState({ isModalVisible: !this.state.isModalVisible });
    };
    render(){
       return (
          <View>
+            <View style={styles.playerMarker}>
+            {this.state.player ?  <Text style={styles.titlePlayerP2}>{"P2"}</Text> :<Text style={styles.titlePlayerP1}>{"P1"}</Text>}   
+            </View>
             <Grid >            
             <View style = {styles.container}>
                <View style = {styles.whitebox} >
@@ -137,10 +150,18 @@ export default class App extends Component {
             </Grid>
                <Modal isVisible={this.state.isModalVisible}>
                   <View style={{ flex: 1 }}>                  
-                     <Button title="Restart" onPress={() => {this.setState({gameStatus: [], player: false, selectedInput: "o"}); this.toggleModal()}} />
-                     {/* <Text>I am the modal content!</Text> */}
+                     <Button title="Restart" onPress={() => {this.setState({gameStatus: [], player: false, selectedInput: "o"}); this.toggleModal(); }} />
+                     <AdMobBanner
+                        bannerSize="fullBanner"
+                        adUnitID= "ca-app-pub-9330146669440542/5854606848"//"ca-app-pub-9330146669440542/5854606848" // ca-app-pub-3940256099942544/6300978111
+                        testDeviceID="EMULATOR"
+                        servePersonalizedAds // true or false
+                        onDidFailToReceiveAdWithError={this.bannerError} 
+                     />
+                     <Text style={styles.titleText}>{this.state.modalText}</Text>
                   </View>
                </Modal>
+              
             {/* <Button
                title="Restart"
                // color="#f194ff"
@@ -156,6 +177,7 @@ const styles = StyleSheet.create ({
       flexDirection: 'column',
       justifyContent: 'center',      
       alignItems: 'center',
+      marginTop: -400,
       flexGrow : 1,
    },
    containerCol: {
@@ -174,6 +196,40 @@ const styles = StyleSheet.create ({
       height: 100,
       backgroundColor: 'black'
    },
+   titleText: {
+      alignItems: 'center',
+      justifyContent: 'center',   
+      flexDirection: 'column',
+      backgroundColor: 'blue',
+      fontSize: 35,
+      fontWeight: 'bold',
+    },
+    titlePlayerP1: {
+      alignItems: 'center',
+      justifyContent: 'center',   
+      flexDirection: 'column',
+      marginTop: 40,
+      width: 50,
+      backgroundColor: 'blue',
+      fontSize: 35,
+      fontWeight: 'bold',
+    },
+    titlePlayerP2: {
+      alignItems: 'center',
+      justifyContent: 'center',   
+      flexDirection: 'column',
+      marginTop: 40,
+      width: 50,
+      backgroundColor: 'red',
+      fontSize: 35,
+      fontWeight: 'bold',
+    },
+    playerMarker: {
+      flexDirection: 'row',
+      justifyContent: 'center',      
+      alignItems: 'center',
+      flexGrow : 1,
+    }
 })
 
 
